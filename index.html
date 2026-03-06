@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>低压电器 · 识配工坊 (靓丽卡片版)</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1e2b3c 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 16px;
+        }
+
+        .game-container {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(4px);
+            border-radius: 56px;
+            padding: 30px 24px 40px;
+            box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2.0rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #b3e5fc, #ffb74d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            margin: 0 auto;
+        }
+
+        .score-panel {
+            background: #263238;
+            border-radius: 60px;
+            padding: 10px 25px;
+            border: 2px solid #ffb74d;
+            color: white;
+            font-size: 1.6rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 12px #ffb74d;
+            margin-top: 10px;
+        }
+
+        .score-panel i {
+            color: #ffb74d;
+            font-size: 2rem;
+        }
+
+        .target-area {
+            background: #263238;
+            border-radius: 80px;
+            padding: 16px 30px;
+            margin: 15px 0 25px 0;
+            border: 2px solid #ffb74d;
+            box-shadow: 0 0 15px #ffb74d33;
+            text-align: center;
+            position: relative;
+        }
+
+        .target-label {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #90a4ae;
+            margin-bottom: 8px;
+        }
+
+        .target-description {
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 2px 5px #00000060;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .target-description i {
+            color: #ffb74d;
+            margin-right: 12px;
+            font-size: 2rem;
+            vertical-align: middle;
+        }
+
+        /* 胜利消息浮层 */
+        .win-message {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fbc02d;
+            color: #1e2b3c;
+            font-size: 1.8rem;
+            font-weight: 800;
+            padding: 12px 30px;
+            border-radius: 60px;
+            white-space: nowrap;
+            box-shadow: 0 8px 0 #b47c00, 0 12px 25px black;
+            border: 2px solid #ffe082;
+            z-index: 10;
+            transition: 0.2s;
+            letter-spacing: 2px;
+        }
+
+        /* 卡片网格：5列两行 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(90px, 1fr));
+            gap: 16px;
+            justify-content: center;
+            margin: 30px 0 20px;
+            overflow-x: auto;
+            padding: 6px 2px;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1.1;
+            background: #f5f5f5;  /* fallback, but will be overridden by color classes */
+            border-radius: 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s, background 0.3s;
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.5), inset 0 -3px 0 rgba(0,0,0,0.1);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            padding: 8px 4px;
+            will-change: transform;
+            font-weight: 600;
+            color: #1e2b3c;
+            position: relative;
+        }
+
+        /* 移除了.card-front的渐变背景，现在由独立的颜色类提供靓丽色彩 */
+        .card-front {
+            background: transparent;  /* 背景完全交由卡片颜色类控制 */
+        }
+
+        .card-flipped {
+            background: #2c3e50 !important;  /* 翻转后统一深色背景，强制覆盖任何颜色类 */
+            border: 3px solid #4db6ac;
+            color: #eceff1;
+            box-shadow: 0 0 20px #4db6ac;
+            transform: scale(1.02);
+        }
+
+        .card:active:not(.no-click) {
+            transform: scale(0.96);
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-7px); }
+            40% { transform: translateX(7px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .card-icon {
+            font-size: 2.8rem;
+            line-height: 1.2;
+            margin-bottom: 5px;
+            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.2));
+        }
+
+        .card-symbol {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: rgba(0,0,0,0.06);
+            padding: 4px 8px;
+            border-radius: 40px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .card-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.5);
+            padding: 4px 8px;
+            border-radius: 50px;
+            color: #1e3a4d;
+        }
+
+        .flipped-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding: 6px;
+        }
+
+        .flipped-content .desc-short {
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: #3a5f6b;
+            padding: 6px 4px;
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 6px;
+            width: 100%;
+        }
+
+        .flipped-content .en-term {
+            font-size: 1.0rem;
+            font-weight: 600;
+            color: #ffd54f;
+            text-transform: uppercase;
+        }
+
+        .flipped-content i {
+            font-size: 1.8rem;
+            margin: 3px 0;
+            color: #80cbc4;
+        }
+
+        .footer-toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn-voice {
+            background: #37474f;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            padding: 14px 30px;
+            border-radius: 60px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 6px 0 #102027, 0 8px 16px black;
+            cursor: pointer;
+            transition: 0.1s linear;
+            font-weight: 600;
+            border: 1px solid #62727b;
+        }
+
+        .btn-voice:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #102027, 0 5px 12px black;
+        }
+
+        .btn-voice i {
+            font-size: 1.8rem;
+            color: #ffb74d;
+        }
+
+        .badge {
+            background: #ffb74d;
+            color: #1d2c3a;
+            border-radius: 40px;
+            padding: 5px 18px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .no-click {
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        .hint-note {
+            color: #b0bec5;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* ---------- 靓丽卡片颜色类 (基于第一张图片上的色调灵感，鲜艳粉彩) ---------- */
+        .card-color-0 { background: linear-gradient(145deg, #b3e0ff, #7bc8ff); } /* QF 亮蓝 */
+        .card-color-1 { background: linear-gradient(145deg, #b3f0d9, #80e0b3); } /* KM 薄荷绿 */
+        .card-color-2 { background: linear-gradient(145deg, #ffcfb3, #ffb085); } /* FR 蜜桃 */
+        .card-color-3 { background: linear-gradient(145deg, #e6b3ff, #d18cff); } /* KA 淡紫 */
+        .card-color-4 { background: linear-gradient(145deg, #ffb3b3, #ff8a8a); } /* FU 珊瑚粉 */
+        .card-color-5 { background: linear-gradient(145deg, #fff2b3, #ffe570); } /* SB 香槟黄 */
+        .card-color-6 { background: linear-gradient(145deg, #b3e8e8, #8cd3d3); } /* KT 海蓝绿 */
+        .card-color-7 { background: linear-gradient(145deg, #ffc1d9, #ffa2c2); } /* SA 樱花粉 */
+        .card-color-8 { background: linear-gradient(145deg, #c5d0e6, #aebddb); } /* QS 薄雾灰蓝 */
+        .card-color-9 { background: linear-gradient(145deg, #ffe0b3, #ffcb8c); } /* TA 杏色 */
+
+        /* 确保翻转时背景被完全覆盖 */
+        .card-flipped {
+            background: #2c3e50 !important;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 700px) {
+            .cards-grid {
+                grid-template-columns: repeat(5, minmax(110px, 1fr));
+                gap: 10px;
+            }
+            .card-icon { font-size: 2.2rem; }
+            .card-symbol { font-size: 1.8rem; }
+            .card-name { font-size: 0.8rem; }
+            .target-description { font-size: 1.3rem; }
+        }
+
+        @media (max-width: 550px) {
+            .cards-grid {
+                grid-template-columns: repeat(5, 130px);
+                gap: 8px;
+            }
+            .game-container { padding: 20px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1><i class="fas fa-bolt"></i> 低压电器 · 识配工坊 <i class="fas fa-microchip"></i></h1>
+        </div>
+
+        <!-- 得分面板 + 胜利消息容器 -->
+        <div style="display: flex; justify-content: center; align-items: center; position: relative;">
+            <div class="score-panel">
+                <i class="fas fa-star"></i>
+                <span id="scoreDisplay">0</span> 分
+            </div>
+            <div id="winMessage" class="win-message" style="display: none;">🎉 挑战成功 🎉</div>
+        </div>
+
+        <!-- 目标描述区域 -->
+        <div class="target-area" id="targetArea">
+            <div class="target-label"><i class="fas fa-robot"></i> 当前任务 · 找到哪个电器？</div>
+            <div class="target-description" id="targetDescription">
+                <i class="fas fa-question-circle"></i> 加载中...
+            </div>
+        </div>
+
+        <!-- 卡片网格 (10张，两行) -->
+        <div class="cards-grid" id="cardsGrid"></div>
+
+        <!-- 底部工具栏 -->
+        <div class="footer-toolbar">
+            <button class="btn-voice" id="voiceSwitchBtn">
+                <i class="fas fa-language"></i> 
+                <span id="voiceLabel">中文发音</span>
+                <span class="badge" id="voiceBadge">中</span>
+            </button>
+            <div class="hint-note" style="margin:0;">
+                <i class="fas fa-lightbulb"></i> 正确翻牌+10分 · 每100分庆祝一次，分数不清零
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 低压电器数据库 (与之前完全相同) ----------
+            const ELECTRICAL_DEVICES = [
+                { symbol: "QF", name: "断路器", description: "过载+短路保护，可接通/分断正常负荷。具有灭弧装置。", en: "Circuit breaker", icon: "fa-toggle-off", fullDesc: "用于配电线路，出现过载或短路时自动跳闸。也作为隔离器使用。" },
+                { symbol: "KM", name: "接触器", description: "线圈得电后主触点闭合，频繁通断主电路。适用于电动机控制。", en: "Contactor", icon: "fa-toggle-on", fullDesc: "电磁式开关，能远距离频繁操作，失压保护。" },
+                { symbol: "FR", name: "热继电器", description: "双金属片热效应，过载保护。常与接触器配合使用。", en: "Thermal relay", icon: "fa-temperature-high", fullDesc: "利用电流热效应，切断控制电路。具有断相保护功能。" },
+                { symbol: "KA", name: "中间继电器", description: "用于信号放大、扩展触点数量。触点容量较小。", en: "Auxiliary relay", icon: "fa-wave-square", fullDesc: "在控制电路中传递信号或同时控制多个电路。" },
+                { symbol: "FU", name: "熔断器", description: "短路保护。熔体熔断分断电路，动作后需更换。", en: "Fuse", icon: "fa-bolt", fullDesc: "反时限特性，分断能力高，主要用于短路保护。" },
+                { symbol: "SB", name: "按钮", description: "手动控制，发出指令。常开/常闭触点。", en: "Push button", icon: "fa-circle-dot", fullDesc: "通常为弹簧复位，控制接触器、继电器线圈等。" },
+                { symbol: "KT", name: "时间继电器", description: "得电或失电后延时输出。有通电延时/断电延时。", en: "Time relay", icon: "fa-clock", fullDesc: "用于电动机星三角启动、顺序控制等场合。" },
+                { symbol: "SA", name: "转换开关", description: "多位置切换，用于选择工作状态或模式。", en: "Selector switch", icon: "fa-arrows-rotate", fullDesc: "手柄操作，可同时控制多路触点。" },
+                { symbol: "QS", name: "隔离开关", description: "具有明显分断点的隔离电源，负载能力较低。", en: "Disconnector", icon: "fa-power-off", fullDesc: "确保检修安全，一般不允许带负荷操作。" },
+                { symbol: "TA", name: "电流互感器", description: "将大电流变换为小电流，用于测量和保护。", en: "Current transformer", icon: "fa-chart-line", fullDesc: "二次侧严禁开路，与仪表、继电器配合。" }
+            ];
+
+            // 状态变量
+            let currentTargetDevice = null;
+            let voiceMode = 'zh';      // 'en' 英文, 'zh' 中文, 'off' 不发音
+            let lock = false;
+            let resetTimer = null;
+            let score = 0;
+            let celebrationTimer = null;
+
+            // DOM 元素
+            const targetDescEl = document.getElementById('targetDescription');
+            const cardsGrid = document.getElementById('cardsGrid');
+            const voiceSwitchBtn = document.getElementById('voiceSwitchBtn');
+            const voiceLabel = document.getElementById('voiceLabel');
+            const voiceBadge = document.getElementById('voiceBadge');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const winMessageEl = document.getElementById('winMessage');
+
+            // 更新得分显示
+            function updateScoreDisplay() {
+                scoreDisplay.textContent = score;
+            }
+
+            // 庆祝函数
+            function celebrate() {
+                if (celebrationTimer) {
+                    clearTimeout(celebrationTimer);
+                }
+                playSuccessTune();
+                winMessageEl.style.display = 'block';
+                celebrationTimer = setTimeout(() => {
+                    winMessageEl.style.display = 'none';
+                    celebrationTimer = null;
+                }, 2000);
+            }
+
+            // 成功音乐
+            function playSuccessTune() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    const audioCtx = new AudioContext();
+                    const now = audioCtx.currentTime;
+
+                    const gainNode = audioCtx.createGain();
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.connect(audioCtx.destination);
+
+                    const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 523.25];
+                    let time = now + 0.1;
+
+                    notes.forEach((freq, index) => {
+                        const osc = audioCtx.createOscillator();
+                        osc.type = index === notes.length-1 ? 'sine' : 'triangle';
+                        osc.frequency.value = freq;
+                        osc.connect(gainNode);
+
+                        const startTime = time + index * 0.15;
+                        const stopTime = startTime + 0.3;
+                        osc.start(startTime);
+                        osc.stop(stopTime);
+                    });
+
+                    audioCtx.resume();
+                } catch (e) {
+                    console.warn('音频播放失败', e);
+                }
+            }
+
+            // 发音
+            function speakForDevice(device) {
+                if (voiceMode === 'off') return;
+                let text = '';
+                let lang = 'en-US';
+                if (voiceMode === 'en') {
+                    text = device.en;
+                    lang = 'en-US';
+                } else if (voiceMode === 'zh') {
+                    text = device.name;
+                    lang = 'zh-CN';
+                }
+                if (!text) return;
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }
+
+            // 切换语音模式
+            function toggleVoice() {
+                if (voiceMode === 'en') {
+                    voiceMode = 'zh';
+                    voiceLabel.innerText = '中文发音';
+                    voiceBadge.innerText = '中';
+                } else if (voiceMode === 'zh') {
+                    voiceMode = 'off';
+                    voiceLabel.innerText = '关闭发音';
+                    voiceBadge.innerText = '静';
+                } else {
+                    voiceMode = 'en';
+                    voiceLabel.innerText = '英文发音';
+                    voiceBadge.innerText = 'EN';
+                }
+            }
+
+            // 重置游戏 (新目标，所有卡片翻正，分数保留)
+            function resetGame() {
+                if (resetTimer) {
+                    clearTimeout(resetTimer);
+                    resetTimer = null;
+                }
+
+                const randomIndex = Math.floor(Math.random() * ELECTRICAL_DEVICES.length);
+                currentTargetDevice = ELECTRICAL_DEVICES[randomIndex];
+                targetDescEl.innerHTML = `<i class="fas fa-microchip"></i> ${currentTargetDevice.description}`;
+
+                renderCards();           // 重新绘制卡片（全部正面 + 靓丽颜色）
+                winMessageEl.style.display = 'none';
+                lock = false;
+            }
+
+            // 翻转卡片至详情面 (并移除颜色类)
+            function flipCardToDetail(cardEl, device) {
+                cardEl.innerHTML = '';
+                cardEl.classList.remove('card-front');
+
+                // 移除所有可能的颜色类 (card-color-0 到 9)
+                const colorClasses = Array.from(cardEl.classList).filter(cls => cls.startsWith('card-color-'));
+                cardEl.classList.remove(...colorClasses);
+
+                cardEl.classList.add('card-flipped', 'no-click');
+
+                const flippedDiv = document.createElement('div');
+                flippedDiv.className = 'flipped-content';
+                flippedDiv.innerHTML = `
+                    <div style="font-size:1.8rem; font-weight:800;">${device.symbol}</div>
+                    <i class="fas ${device.icon}" style="font-size:2.2rem; margin:5px 0;"></i>
+                    <div class="desc-short">${device.fullDesc || device.description}</div>
+                    <div class="en-term">${device.en}</div>
+                `;
+                cardEl.appendChild(flippedDiv);
+            }
+
+            // 卡片点击处理
+            function handleCardClick(device, cardElement) {
+                if (lock) return;
+
+                if (device.symbol === currentTargetDevice.symbol) {
+                    // 正确
+                    speakForDevice(device);
+                    flipCardToDetail(cardElement, device);
+
+                    score += 10;
+                    updateScoreDisplay();
+                    lock = true;
+
+                    // 每100分庆祝一次
+                    if (score >= 100 && score % 100 === 0) {
+                        celebrate();
+                    }
+
+                    if (resetTimer) clearTimeout(resetTimer);
+                    resetTimer = setTimeout(() => {
+                        resetGame();
+                    }, 1500);
+                } else {
+                    // 错误: 震动
+                    cardElement.classList.add('shake');
+                    setTimeout(() => {
+                        cardElement.classList.remove('shake');
+                    }, 300);
+                }
+            }
+
+            // 绘制所有卡片 (正面 + 分配靓丽颜色类)
+            function renderCards() {
+                cardsGrid.innerHTML = '';
+
+                ELECTRICAL_DEVICES.forEach((device, index) => {
+                    const card = document.createElement('div');
+                    card.className = `card card-front card-color-${index}`;  // 分配对应索引的靓丽颜色
+
+                    card.innerHTML = `
+                        <div class="card-icon"><i class="fas ${device.icon}"></i></div>
+                        <div class="card-symbol">${device.symbol}</div>
+                        <div class="card-name">${device.name}</div>
+                    `;
+
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleCardClick(device, card);
+                    });
+
+                    cardsGrid.appendChild(card);
+                });
+            }
+
+            // 初始化游戏
+            function initGame() {
+                const randomIndex = Math.floor(Math.random() * ELECTRICAL_DEVICES.length);
+                currentTargetDevice = ELECTRICAL_DEVICES[randomIndex];
+                targetDescEl.innerHTML = `<i class="fas fa-microchip"></i> ${currentTargetDevice.description}`;
+
+                score = 0;
+                updateScoreDisplay();
+                renderCards();
+
+                voiceSwitchBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleVoice();
+                });
+
+                lock = false;
+                if (resetTimer) clearTimeout(resetTimer);
+                winMessageEl.style.display = 'none';
+            }
+
+            initGame();
+        })();
+    </script>
+</body>
+</html>
